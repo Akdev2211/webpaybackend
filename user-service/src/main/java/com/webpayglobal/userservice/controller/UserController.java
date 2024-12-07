@@ -1,10 +1,11 @@
 package com.webpayglobal.userservice.controller;
 
-import com.webpayglobal.userservice.dto.UserRegistrationDto;
-import com.webpayglobal.userservice.dto.LoginRequest;
 import com.webpayglobal.userservice.dto.JwtAuthenticationResponse;
+import com.webpayglobal.userservice.dto.UserRegistrationDto;
+import com.webpayglobal.userservice.model.User;
 import com.webpayglobal.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -22,8 +24,13 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto) {
-        userService.registerUser(registrationDto);
-        return ResponseEntity.ok("User registered successfully");
+        Optional<User> registeredUser = userService.registerUser(registrationDto);
+
+        if (registeredUser.isPresent()) {
+            return ResponseEntity.ok("User registered successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
+        }
     }
 
     @PostMapping("/login")
@@ -43,8 +50,11 @@ public class UserController {
         // Get user ID from security context
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        
-        userService.enableGoogleAuth(userPrincipal.getClass(), secret);
+
+        // Assuming userId needs to be extracted from userPrincipal
+        Long userId = // Extract user ID from userPrincipal appropriately
+
+                userService.enableGoogleAuth(userId, secret);
         return ResponseEntity.ok("Two-factor authentication enabled successfully");
     }
 }
